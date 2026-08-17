@@ -46,10 +46,14 @@ export class LinkPreviewState {
   async fetchPreview(url: string): Promise<void> {
     this.fetchingURLs.add(url);
 
-    const preview = await this.getAPI().fetchLinkPreview(url);
-
-    this.fetchingURLs.delete(url);
-    this.previews.set(url, preview);
+    try {
+      const preview = await this.getAPI().fetchLinkPreview(url);
+      this.previews.set(url, preview);
+    } catch {
+      this.previews.set(url, null);
+    } finally {
+      this.fetchingURLs.delete(url);
+    }
   }
 
   dismissPreview(url: string): void {
