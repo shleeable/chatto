@@ -106,6 +106,7 @@ func connectError(err error) error {
 	}
 	if errors.Is(err, core.ErrRoomArchived) ||
 		errors.Is(err, core.ErrEditWindowExpired) ||
+		errors.Is(err, core.ErrLoginChangeCooldown) ||
 		errors.Is(err, core.ErrLimitExceeded) ||
 		errors.Is(err, core.ErrFreshAuthRequired) ||
 		errors.Is(err, core.ErrPasswordAlreadySet) ||
