@@ -42,7 +42,6 @@ const { mocks } = vi.hoisted(() => {
         projection: { viewer: {} as object | null },
         notifications: {
           fetch: vi.fn().mockResolvedValue(undefined),
-          setUnreadNotificationCount: vi.fn(),
           unreadNotificationCount: 0,
           getNonDMNotification: vi.fn().mockReturnValue(null),
           getDMNotification: vi.fn().mockReturnValue(null),
@@ -51,18 +50,12 @@ const { mocks } = vi.hoisted(() => {
         },
         roomUnread: {
           hasAnyUnread: true,
-          captureSnapshotRevision: vi.fn().mockReturnValue(0),
           clear: vi.fn(),
-          initRooms: vi.fn(),
           updateRooms: vi.fn(),
           resolveUnknownUnread: vi.fn(),
-          setServerHasUnread: vi.fn(),
-          setRoomUnread: vi.fn(),
           getFirstUnreadRoomId: vi.fn().mockReturnValue(null)
         },
         notificationLevels: {
-          setServerPreference: vi.fn(),
-          setRoomPreference: vi.fn(),
           isRoomMuted: vi.fn().mockReturnValue(false),
           isServerMuted: vi.fn().mockReturnValue(false)
         },
@@ -76,7 +69,6 @@ const { mocks } = vi.hoisted(() => {
             reason: 'version-confirmed'
           }
         },
-        setPermissions: vi.fn(),
         serverIndicator: vi.fn().mockReturnValue(null)
       }
     }
@@ -236,23 +228,14 @@ describe('ServerSidebarEntry', () => {
     mocks.createRoomDirectoryAPI.mockReturnValue({ listRooms: mocks.listRooms });
     mocks.store.notifications.fetch.mockClear();
     mocks.store.notifications.fetch.mockResolvedValue(undefined);
-    mocks.store.notifications.setUnreadNotificationCount.mockClear();
     mocks.store.notifications.unreadNotificationCount = 0;
     mocks.store.notifications.getNonDMNotification.mockReturnValue(null);
     mocks.store.notifications.getDMNotification.mockReturnValue(null);
     mocks.store.notifications.dismiss.mockClear();
     mocks.store.notifications.getCleanPath.mockReturnValue('/chat/remote.example.com/room-1');
     mocks.store.roomUnread.clear.mockClear();
-    mocks.store.roomUnread.captureSnapshotRevision.mockClear();
-    mocks.store.roomUnread.captureSnapshotRevision.mockReturnValue(0);
-    mocks.store.roomUnread.initRooms.mockClear();
     mocks.store.roomUnread.updateRooms.mockClear();
     mocks.store.roomUnread.resolveUnknownUnread.mockClear();
-    mocks.store.roomUnread.setServerHasUnread.mockClear();
-    mocks.store.roomUnread.setRoomUnread.mockClear();
-    mocks.store.notificationLevels.setServerPreference.mockClear();
-    mocks.store.notificationLevels.setRoomPreference.mockClear();
-    mocks.store.setPermissions.mockClear();
     mocks.store.serverIndicator.mockReturnValue(null);
     mocks.store.projection.viewer = {};
     mocks.store.serverInfo.name = 'Loaded Remote';
