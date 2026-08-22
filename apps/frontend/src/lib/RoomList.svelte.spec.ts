@@ -19,17 +19,7 @@ const { mocks } = vi.hoisted(() => ({
       requestRoomSidebarPanel: vi.fn()
     },
     store: {
-      currentUser: { user: { id: 'me' } },
       notifications: {
-        hasDMRoomNotification: vi.fn().mockReturnValue(false),
-        hasRoomNotification: vi.fn().mockReturnValue(false),
-        getDMRoomNotification: vi.fn().mockReturnValue(null),
-        getRoomNotification: vi.fn().mockReturnValue(null),
-        fetchRoomNotification: vi.fn().mockResolvedValue({
-          ok: true,
-          totalCount: 0,
-          notification: null
-        }),
         resolveRoomNotification: vi.fn().mockResolvedValue({
           ok: true,
           totalCount: 0,
@@ -42,25 +32,13 @@ const { mocks } = vi.hoisted(() => ({
         isRoomMuted: vi.fn().mockReturnValue(false)
       },
       roomUnread: {
-        roomIsUnread: vi.fn((roomId: string) => mocks.unreadRoomIds.has(roomId)),
-        setRoomUnread: vi.fn((roomId: string, unread: boolean) => {
-          if (unread) mocks.unreadRoomIds.add(roomId);
-          else mocks.unreadRoomIds.delete(roomId);
-        })
+        roomIsUnread: vi.fn((roomId: string) => mocks.unreadRoomIds.has(roomId))
       },
       activeCallRooms: {
         has: vi.fn((roomId: string) => mocks.activeCallRoomIds.has(roomId)),
         getParticipants: vi.fn(
           (roomId: string) => mocks.projectedCallParticipants.get(roomId) ?? []
         )
-      },
-      voiceCall: {
-        join: vi.fn().mockResolvedValue(undefined),
-        handleParticipantLeftEvent: vi.fn(),
-        handleCallEndedEvent: vi.fn()
-      },
-      serverInfo: {
-        livekitUrl: null
       },
       navigation: {
         rooms: [],
@@ -73,8 +51,7 @@ const { mocks } = vi.hoisted(() => ({
       },
       pendingHighlights: {
         set: vi.fn()
-      },
-      handleVoiceCallJoinFailed: vi.fn()
+      }
     }
   }
 }));
@@ -116,10 +93,7 @@ vi.mock('$lib/state/server/scope.svelte', () => ({
 
 vi.mock('$lib/state/server/registry.svelte', () => ({
   serverRegistry: {
-    isOriginServer: vi.fn(() => true),
-    getServer: vi.fn(() => ({ id: 'origin', url: 'https://chat.example.test' })),
-    originServer: { id: 'origin' },
-    servers: [{ id: 'origin', url: 'https://chat.example.test' }]
+    getServer: vi.fn(() => ({ id: 'origin', url: 'https://chat.example.test' }))
   }
 }));
 
@@ -266,11 +240,6 @@ beforeEach(() => {
   mocks.store.navigation.currentUserId = 'me';
   setRooms();
   vi.clearAllMocks();
-  mocks.store.notifications.fetchRoomNotification.mockResolvedValue({
-    ok: true,
-    totalCount: 0,
-    notification: null
-  });
   mocks.store.notifications.resolveRoomNotification.mockResolvedValue({
     ok: true,
     totalCount: 0,
