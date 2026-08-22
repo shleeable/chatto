@@ -16,10 +16,6 @@ export type ConnectAPIConfig = {
   onAuthenticationRequired?: (serverId: string) => void;
 };
 
-export type PublicConnectAPIConfig = {
-  baseUrl: string;
-};
-
 export function connectEndpoint(baseUrl: string): string {
   return new URL("/api/connect", baseUrl).toString();
 }
@@ -77,17 +73,6 @@ export function handleAuthError(
     );
   }
   throw err;
-}
-
-export async function withAuth<T>(
-  config: Pick<ConnectAPIConfig, "serverId" | "onAuthenticationRequired">,
-  operation: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await operation();
-  } catch (err) {
-    handleAuthError(config, err);
-  }
 }
 
 export function isConnectCode(err: unknown, code: Code): boolean {
