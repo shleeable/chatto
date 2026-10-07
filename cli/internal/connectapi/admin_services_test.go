@@ -721,6 +721,53 @@ func TestOperatorUserServiceUpdateUserEventsUseSystemActor(t *testing.T) {
 	}
 }
 
+func TestOperatorUserServiceUpdateOAuthExternalIdentity(t *testing.T) {
+	t.Parallel()
+
+	env := newConnectAPITestEnv(t)
+	operator := &operatorUserService{api: env.api}
+
+	user, err := env.core.CreateVerifiedUser(env.ctx, core.SystemActorID, "operator-oauth-user", "OAuth User", "password123", "operator-oauth@example.com")
+	if err != nil {
+		t.Fatalf("CreateVerifiedUser: %v", err)
+	}
+
+	resp, err := operator.UpdateOAuthExternalIdentity(env.ctx, connect.NewRequest(&operatorv1.UpdateOAuthExternalIdentityRequest{
+		Email:        "operator-oauth@example.com",
+		IdentitySpec: "https://auth.example.com:sub-12345",
+	}))
+	if err != nil {
+		t.Fatalf("UpdateOAuthExternalIdentity: %v", err)
+	}
+	if resp.Msg.GetMember().GetUser().GetId() != user.Id {
+		t.Fatalf("member user id = %q, want %q", resp.Msg.GetMember().GetUser().GetId(), user.Id)
+	}
+
+	found, err := env.core.GetUserByExternalIdentity(env.ctx, "https://auth.example.com", "sub-12345")
+	if err != nil {
+		t.Fatalf("GetUserByExternalIdentity: %v", err)
+	}
+	if found == nil || found.Id != user.Id {
+		t.Fatalf("GetUserByExternalIdentity = %+v, want %s", found, user.Id)
+	}
+
+	// Missing arguments validation tests
+	_, err = operator.UpdateOAuthExternalIdentity(env.ctx, connect.NewRequest(&operatorv1.UpdateOAuthExternalIdentityRequest{
+		Email:        "",
+		IdentitySpec: "https://auth.example.com:sub-12345",
+	}))
+	if errorCode(err) != connect.CodeInvalidArgument {
+		t.Fatalf("empty email err = %v, want invalid argument", err)
+	}
+	_, err = operator.UpdateOAuthExternalIdentity(env.ctx, connect.NewRequest(&operatorv1.UpdateOAuthExternalIdentityRequest{
+		Email:        "operator-oauth@example.com",
+		IdentitySpec: "",
+	}))
+	if errorCode(err) != connect.CodeInvalidArgument {
+		t.Fatalf("empty identity spec err = %v, want invalid argument", err)
+	}
+}
+
 func TestOperatorUserServiceClearUsernameCooldownUsesSystemActor(t *testing.T) {
 	t.Parallel()
 

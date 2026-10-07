@@ -63,6 +63,9 @@ const (
 	// OperatorUserServiceClearUsernameCooldownProcedure is the fully-qualified name of the
 	// OperatorUserService's ClearUsernameCooldown RPC.
 	OperatorUserServiceClearUsernameCooldownProcedure = "/chatto.operator.v1.OperatorUserService/ClearUsernameCooldown"
+	// OperatorUserServiceUpdateOAuthExternalIdentityProcedure is the fully-qualified name of the
+	// OperatorUserService's UpdateOAuthExternalIdentity RPC.
+	OperatorUserServiceUpdateOAuthExternalIdentityProcedure = "/chatto.operator.v1.OperatorUserService/UpdateOAuthExternalIdentity"
 )
 
 // OperatorUserServiceClient is a client for the chatto.operator.v1.OperatorUserService service.
@@ -87,6 +90,8 @@ type OperatorUserServiceClient interface {
 	AddVerifiedEmail(context.Context, *connect.Request[v1.AddVerifiedEmailRequest]) (*connect.Response[v1.AddVerifiedEmailResponse], error)
 	// Clears a user's self-service username-change cooldown.
 	ClearUsernameCooldown(context.Context, *connect.Request[v1.ClearUsernameCooldownRequest]) (*connect.Response[v1.ClearUsernameCooldownResponse], error)
+	// Updates a user's OAuth external identity by email and new issuer:subject spec.
+	UpdateOAuthExternalIdentity(context.Context, *connect.Request[v1.UpdateOAuthExternalIdentityRequest]) (*connect.Response[v1.UpdateOAuthExternalIdentityResponse], error)
 }
 
 // NewOperatorUserServiceClient constructs a client for the chatto.operator.v1.OperatorUserService
@@ -160,21 +165,28 @@ func NewOperatorUserServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(operatorUserServiceMethods.ByName("ClearUsernameCooldown")),
 			connect.WithClientOptions(opts...),
 		),
+		updateOAuthExternalIdentity: connect.NewClient[v1.UpdateOAuthExternalIdentityRequest, v1.UpdateOAuthExternalIdentityResponse](
+			httpClient,
+			baseURL+OperatorUserServiceUpdateOAuthExternalIdentityProcedure,
+			connect.WithSchema(operatorUserServiceMethods.ByName("UpdateOAuthExternalIdentity")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // operatorUserServiceClient implements OperatorUserServiceClient.
 type operatorUserServiceClient struct {
-	createUser            *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
-	listUsers             *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
-	getUser               *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
-	assignRole            *connect.Client[v1.AssignRoleRequest, v1.AssignRoleResponse]
-	revokeRole            *connect.Client[v1.RevokeRoleRequest, v1.RevokeRoleResponse]
-	updateUser            *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
-	setUserPassword       *connect.Client[v1.SetUserPasswordRequest, v1.SetUserPasswordResponse]
-	deleteUser            *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
-	addVerifiedEmail      *connect.Client[v1.AddVerifiedEmailRequest, v1.AddVerifiedEmailResponse]
-	clearUsernameCooldown *connect.Client[v1.ClearUsernameCooldownRequest, v1.ClearUsernameCooldownResponse]
+	createUser                  *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
+	listUsers                   *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	getUser                     *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
+	assignRole                  *connect.Client[v1.AssignRoleRequest, v1.AssignRoleResponse]
+	revokeRole                  *connect.Client[v1.RevokeRoleRequest, v1.RevokeRoleResponse]
+	updateUser                  *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
+	setUserPassword             *connect.Client[v1.SetUserPasswordRequest, v1.SetUserPasswordResponse]
+	deleteUser                  *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	addVerifiedEmail            *connect.Client[v1.AddVerifiedEmailRequest, v1.AddVerifiedEmailResponse]
+	clearUsernameCooldown       *connect.Client[v1.ClearUsernameCooldownRequest, v1.ClearUsernameCooldownResponse]
+	updateOAuthExternalIdentity *connect.Client[v1.UpdateOAuthExternalIdentityRequest, v1.UpdateOAuthExternalIdentityResponse]
 }
 
 // CreateUser calls chatto.operator.v1.OperatorUserService.CreateUser.
@@ -227,6 +239,12 @@ func (c *operatorUserServiceClient) ClearUsernameCooldown(ctx context.Context, r
 	return c.clearUsernameCooldown.CallUnary(ctx, req)
 }
 
+// UpdateOAuthExternalIdentity calls
+// chatto.operator.v1.OperatorUserService.UpdateOAuthExternalIdentity.
+func (c *operatorUserServiceClient) UpdateOAuthExternalIdentity(ctx context.Context, req *connect.Request[v1.UpdateOAuthExternalIdentityRequest]) (*connect.Response[v1.UpdateOAuthExternalIdentityResponse], error) {
+	return c.updateOAuthExternalIdentity.CallUnary(ctx, req)
+}
+
 // OperatorUserServiceHandler is an implementation of the chatto.operator.v1.OperatorUserService
 // service.
 type OperatorUserServiceHandler interface {
@@ -250,6 +268,8 @@ type OperatorUserServiceHandler interface {
 	AddVerifiedEmail(context.Context, *connect.Request[v1.AddVerifiedEmailRequest]) (*connect.Response[v1.AddVerifiedEmailResponse], error)
 	// Clears a user's self-service username-change cooldown.
 	ClearUsernameCooldown(context.Context, *connect.Request[v1.ClearUsernameCooldownRequest]) (*connect.Response[v1.ClearUsernameCooldownResponse], error)
+	// Updates a user's OAuth external identity by email and new issuer:subject spec.
+	UpdateOAuthExternalIdentity(context.Context, *connect.Request[v1.UpdateOAuthExternalIdentityRequest]) (*connect.Response[v1.UpdateOAuthExternalIdentityResponse], error)
 }
 
 // NewOperatorUserServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -319,6 +339,12 @@ func NewOperatorUserServiceHandler(svc OperatorUserServiceHandler, opts ...conne
 		connect.WithSchema(operatorUserServiceMethods.ByName("ClearUsernameCooldown")),
 		connect.WithHandlerOptions(opts...),
 	)
+	operatorUserServiceUpdateOAuthExternalIdentityHandler := connect.NewUnaryHandler(
+		OperatorUserServiceUpdateOAuthExternalIdentityProcedure,
+		svc.UpdateOAuthExternalIdentity,
+		connect.WithSchema(operatorUserServiceMethods.ByName("UpdateOAuthExternalIdentity")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/chatto.operator.v1.OperatorUserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OperatorUserServiceCreateUserProcedure:
@@ -341,6 +367,8 @@ func NewOperatorUserServiceHandler(svc OperatorUserServiceHandler, opts ...conne
 			operatorUserServiceAddVerifiedEmailHandler.ServeHTTP(w, r)
 		case OperatorUserServiceClearUsernameCooldownProcedure:
 			operatorUserServiceClearUsernameCooldownHandler.ServeHTTP(w, r)
+		case OperatorUserServiceUpdateOAuthExternalIdentityProcedure:
+			operatorUserServiceUpdateOAuthExternalIdentityHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -388,4 +416,8 @@ func (UnimplementedOperatorUserServiceHandler) AddVerifiedEmail(context.Context,
 
 func (UnimplementedOperatorUserServiceHandler) ClearUsernameCooldown(context.Context, *connect.Request[v1.ClearUsernameCooldownRequest]) (*connect.Response[v1.ClearUsernameCooldownResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("chatto.operator.v1.OperatorUserService.ClearUsernameCooldown is not implemented"))
+}
+
+func (UnimplementedOperatorUserServiceHandler) UpdateOAuthExternalIdentity(context.Context, *connect.Request[v1.UpdateOAuthExternalIdentityRequest]) (*connect.Response[v1.UpdateOAuthExternalIdentityResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("chatto.operator.v1.OperatorUserService.UpdateOAuthExternalIdentity is not implemented"))
 }

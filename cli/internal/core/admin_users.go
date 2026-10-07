@@ -223,3 +223,35 @@ func (c *ChattoCore) AdminRevokeUserRole(ctx context.Context, userID, roleName s
 func (c *ChattoCore) AdminClearUserLoginChangeCooldown(ctx context.Context, userID string) error {
 	return c.ClearLoginChangeCooldownAs(ctx, SystemActorID, userID)
 }
+
+// AdminUpdateOAuthExternalIdentityAs updates or replaces a user's OAuth external identity by verified email.
+// The identitySpec parameter is in the format "ISSUER:SUBJECT".
+func (c *ChattoCore) AdminUpdateOAuthExternalIdentityAs(ctx context.Context, actorID, email, identitySpec string) (*AdminUserView, error) {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return nil, ErrInvalidArgument
+	}
+	user, err := c.GetUserByVerifiedEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	identitySpec = strings.TrimSpace(identitySpec)
+	lastColon := strings.LastIndex(identitySpec, ":")
+	if lastColon <= 0 || lastColon == len(identitySpec)-1 {
+		return nil, fmt.Errorf("%w: identity_spec must be in ISSUER:SUBJECT format", ErrInvalidArgument)
+	}
+	issuer := strings.TrimSpace(identitySpec[:lastColon])
+	subject := strings.TrimSpace(identitySpec[lastColon+1:])
+	if issuer == "" || subject == "" {
+		return nil, fmt.Errorf("%w: issuer and subject must not be empty", ErrInvalidArgument)
+	}
+
+	providerID := issuer
+	providerType := "oidc"
+
+	if err := c.LinkExternalIdentity(ctx, providerID, providerType, issuer, subject, user.GetId()); err != nil {
+		return nil, err
+	}
+	return c.AdminGetUser(ctx, user.GetId())
+}

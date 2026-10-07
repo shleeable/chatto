@@ -545,6 +545,49 @@ func TestChattoCore_DisconnectExternalIdentityRejectsLastPasswordlessMethod(t *t
 	}
 }
 
+func TestChattoCore_AdminUpdateOAuthExternalIdentityAs(t *testing.T) {
+	t.Parallel()
+
+	core, _ := setupTestCore(t)
+	ctx := testContext(t)
+
+	user, err := core.CreateVerifiedUser(ctx, SystemActorID, "updateoauthuser", "OAuth User", "password123", "oauth@example.com")
+	if err != nil {
+		t.Fatalf("CreateVerifiedUser: %v", err)
+	}
+
+	// Link initial identity
+	if err := core.LinkExternalIdentity(ctx, "old-issuer", "oidc", "old-issuer", "old-sub", user.Id); err != nil {
+		t.Fatalf("LinkExternalIdentity: %v", err)
+	}
+
+	// Update identity via AdminUpdateOAuthExternalIdentityAs
+	view, err := core.AdminUpdateOAuthExternalIdentityAs(ctx, SystemActorID, "oauth@example.com", "https://new-issuer.com:new-sub-uuid")
+	if err != nil {
+		t.Fatalf("AdminUpdateOAuthExternalIdentityAs: %v", err)
+	}
+	if view == nil || view.User.GetId() != user.Id {
+		t.Fatalf("view = %+v, want user %s", view, user.Id)
+	}
+
+	// Verify lookup with new identity works
+	found, err := core.GetUserByExternalIdentity(ctx, "https://new-issuer.com", "new-sub-uuid")
+	if err != nil {
+		t.Fatalf("GetUserByExternalIdentity: %v", err)
+	}
+	if found == nil || found.Id != user.Id {
+		t.Fatalf("GetUserByExternalIdentity = %+v, want %s", found, user.Id)
+	}
+
+	// Invalid spec tests
+	if _, err := core.AdminUpdateOAuthExternalIdentityAs(ctx, SystemActorID, "oauth@example.com", "no-colon-spec"); !errors.Is(err, ErrInvalidArgument) {
+		t.Fatalf("no colon spec err = %v, want ErrInvalidArgument", err)
+	}
+	if _, err := core.AdminUpdateOAuthExternalIdentityAs(ctx, SystemActorID, "nonexistent@example.com", "https://new-issuer.com:sub"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("nonexistent user err = %v, want ErrNotFound", err)
+	}
+}
+
 func TestChattoCore_DisconnectExternalIdentityConcurrentDuplicate(t *testing.T) {
 	t.Parallel()
 

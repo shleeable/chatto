@@ -205,6 +205,24 @@ func (s *operatorUserService) ClearUsernameCooldown(ctx context.Context, req *co
 	return connect.NewResponse(&operatorv1.ClearUsernameCooldownResponse{Cleared: true}), nil
 }
 
+func (s *operatorUserService) UpdateOAuthExternalIdentity(ctx context.Context, req *connect.Request[operatorv1.UpdateOAuthExternalIdentityRequest]) (*connect.Response[operatorv1.UpdateOAuthExternalIdentityResponse], error) {
+	if strings.TrimSpace(req.Msg.GetEmail()) == "" {
+		return nil, invalidArgument("email is required")
+	}
+	if strings.TrimSpace(req.Msg.GetIdentitySpec()) == "" {
+		return nil, invalidArgument("identity_spec is required")
+	}
+	updated, err := s.api.core.AdminUpdateOAuthExternalIdentityAs(ctx, core.SystemActorID, req.Msg.GetEmail(), req.Msg.GetIdentitySpec())
+	if err != nil {
+		return nil, err
+	}
+	member, err := operatorAdminMember(ctx, s.api, updated)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&operatorv1.UpdateOAuthExternalIdentityResponse{Member: member}), nil
+}
+
 func operatorAdminMember(ctx context.Context, api *API, user *core.AdminUserView) (*adminv1.AdminMember, error) {
 	if user == nil || user.User == nil {
 		return nil, core.ErrNotFound

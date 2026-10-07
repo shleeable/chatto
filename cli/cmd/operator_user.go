@@ -34,6 +34,7 @@ func init() {
 		operatorUserDeleteCmd(),
 		operatorUserAddEmailCmd(),
 		operatorUserRoleCmd(),
+		operatorUserOAuthExternalIdentityCmd(),
 	)
 }
 
@@ -366,6 +367,38 @@ func operatorUserDeleteCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&yes, "yes", false, "confirm irreversible user deletion")
 	return cmd
+}
+
+func operatorUserOAuthExternalIdentityCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "oauthexternalidentity EMAIL ISSUER:SUB",
+		Aliases: []string{"oauthexternalidentity"},
+		Short:   "Update a user's OAuth external identity",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			email := strings.TrimSpace(args[0])
+			identitySpec := strings.TrimSpace(args[1])
+			if email == "" {
+				return errors.New("EMAIL is required")
+			}
+			if identitySpec == "" {
+				return errors.New("ISSUER:SUB is required")
+			}
+			client, err := newOperatorUserClient()
+			if err != nil {
+				return err
+			}
+			resp, err := client.UpdateOAuthExternalIdentity(cmd.Context(), operatorRequest(&operatorv1.UpdateOAuthExternalIdentityRequest{
+				Email:        email,
+				IdentitySpec: identitySpec,
+			}))
+			if err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			return printOperatorOutput(out, resp.Msg, func() { printOperatorUserLine(out, resp.Msg.GetMember()) })
+		},
+	}
 }
 
 func operatorUserAddEmailCmd() *cobra.Command {
