@@ -16,6 +16,7 @@ func TestRootRegistersOperatorUserCommands(t *testing.T) {
 		{"operator", "user", "create", "--help"},
 		{"operator", "user", "set-password", "--help"},
 		{"operator", "user", "clear-username-cooldown", "--help"},
+		{"operator", "user", "oauthexternalidentity", "--help"},
 		{"operator", "user", "role", "add", "--help"},
 	} {
 		cmd, _, err := rootCmd.Find(args)
@@ -185,6 +186,15 @@ func TestOperatorUserCommandsExerciseOperatorAPI(t *testing.T) {
 	}
 	if _, err := env.core.UpdateUserLogin(env.ctx, user.Id, "cli-admin-second"); err != nil {
 		t.Fatalf("self-service login change after cooldown clear: %v", err)
+	}
+
+	oauthOut := env.run(t, "operator", "user", "oauthexternalidentity", "cli-admin@example.com", "https://new-issuer.example.com:new-sub-12345")
+	if !strings.Contains(oauthOut, user.Id) {
+		t.Fatalf("oauthexternalidentity output = %q, want user %s", oauthOut, user.Id)
+	}
+	foundUser, err := env.core.GetUserByExternalIdentity(env.ctx, "https://new-issuer.example.com", "new-sub-12345")
+	if err != nil || foundUser == nil || foundUser.Id != user.Id {
+		t.Fatalf("GetUserByExternalIdentity = %+v, %v; want user %s", foundUser, err, user.Id)
 	}
 
 	deleteOut := env.run(t, "operator", "user", "delete", user.Id, "--yes")

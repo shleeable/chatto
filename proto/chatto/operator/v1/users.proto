@@ -180,6 +180,23 @@ message ClearUsernameCooldownResponse {
   bool cleared = 1;
 }
 
+// Request to update a user's OAuth external identity by email.
+message UpdateOAuthExternalIdentityRequest {
+  // Target verified email address.
+  string email = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 320
+  }];
+  // New external identity spec in ISSUER:SUBJECT format.
+  string identity_spec = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+// Result of updating a user's OAuth external identity.
+message UpdateOAuthExternalIdentityResponse {
+  // Updated member row.
+  chatto.admin.v1.AdminMember member = 1;
+}
+
 // Root-equivalent local operator user commands.
 service OperatorUserService {
   // Creates a user as a local operator.
@@ -202,4 +219,6 @@ service OperatorUserService {
   rpc AddVerifiedEmail(AddVerifiedEmailRequest) returns (AddVerifiedEmailResponse);
   // Clears a user's self-service username-change cooldown.
   rpc ClearUsernameCooldown(ClearUsernameCooldownRequest) returns (ClearUsernameCooldownResponse);
+  // Updates a user's OAuth external identity by email and new issuer:subject spec.
+  rpc UpdateOAuthExternalIdentity(UpdateOAuthExternalIdentityRequest) returns (UpdateOAuthExternalIdentityResponse);
 }
